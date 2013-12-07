@@ -1,5 +1,6 @@
 package pl.net.hola.theonionphone;
 
+import pl.net.hola.theonionphone.audio.codecs.Codec2;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
@@ -10,6 +11,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        Codec2 codec2 = new Codec2();
     }
 
 

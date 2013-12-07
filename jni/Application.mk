@@ -1,0 +1,1 @@
+APP_MODULES	 += codec2_codec
