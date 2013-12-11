@@ -1,17 +1,16 @@
 package pl.net.hola.theonionphone.audio;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public interface AudioManager {
 	
-	boolean isReady();
-	
 	InputStream getStream();
 	
-	void playStream(OutputStream outputStream);
+	void startSending();
 	
 	void stopSending();
+	
+	void playStream(InputStream inputStream);
 	
 	void stopPlaying();
 }

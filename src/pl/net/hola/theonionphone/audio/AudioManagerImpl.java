@@ -1,51 +1,44 @@
 package pl.net.hola.theonionphone.audio;
 
 import java.io.InputStream;
-import java.io.OutputStream;
-
 import pl.net.hola.theonionphone.audio.codecs.Codec;
 import pl.net.hola.theonionphone.audio.codecs.Codec2;
 import pl.net.hola.theonionphone.utils.locator.LocalService;
 
 public class AudioManagerImpl extends LocalService implements AudioManager {
 
-	private Codec codec;
-	private AudioInput audioInput;
-	
+	private final Codec codec;
+	private final AudioInput audioInput;
+	private final AudioOutput audioOutput;
 	
 	public AudioManagerImpl() {
 		this.codec = Codec2.getInstance();
 		this.audioInput = new AudioInput(codec);
+		this.audioOutput = new AudioOutput(codec);
 	}
 	
 	@Override
-	public boolean isReady() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public InputStream getStream() {
-		// TODO Auto-generated method stub
-		return null;
+		return audioInput.getStream();
 	}
-
+	
 	@Override
-	public void playStream(OutputStream outputStream) {
-		// TODO Auto-generated method stub
-
+	public void startSending() {
+		audioInput.startSending();
 	}
-
+	
 	@Override
 	public void stopSending() {
-		// TODO Auto-generated method stub
+		audioInput.stopSending();
+	}
 
+	@Override
+	public void playStream(InputStream inputStream) {
+		audioOutput.playStream(inputStream);
 	}
 
 	@Override
 	public void stopPlaying() {
-		// TODO Auto-generated method stub
-
+		audioOutput.stopPlaying();
 	}
-	
 }

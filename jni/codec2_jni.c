@@ -8,7 +8,7 @@
 void *codec2 = NULL;
 
 
-JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2_init
+JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2Init
 	(JNIEnv *env, jobject obj) {
 
 	codec2 = codec2_create();
@@ -19,7 +19,7 @@ JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2
 	return (jint)0;
 }
 
-JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2_encode
+JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2Encode
     (JNIEnv *env, jobject obj, jshortArray input, jbyteArray output) {
 
 	if(codec2 == NULL) {
@@ -37,7 +37,7 @@ JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2
 	return (jint)0;
 }
 
-JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2_decode
+JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2Decode
 	(JNIEnv *env, jobject obj, jshortArray output, jbyteArray input) {
 
 	if(codec2 == NULL) {
@@ -55,7 +55,7 @@ JNIEXPORT jint JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2
 	return (jint)0;
 }
 
-JNIEXPORT void JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2_release
+JNIEXPORT void JNICALL Java_pl_net_hola_theonionphone_audio_codecs_Codec2_codec2Release
 	(JNIEnv *env, jobject obj) {
 
 	codec2_destroy(codec2);

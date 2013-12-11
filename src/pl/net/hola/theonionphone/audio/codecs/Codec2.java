@@ -22,7 +22,7 @@ public class Codec2 implements Codec {
 	@Override
 	public void initialize() {
 		if(initializedTimes == 0) {
-			codec2_init();
+			codec2Init();
 		}
 		initializedTimes++;
 	}
@@ -33,14 +33,14 @@ public class Codec2 implements Codec {
 		
 		initializedTimes--;
 		if(initializedTimes == 0) {
-			codec2_release();
+			codec2Release();
 		}
 	}
 	
 	@Override
 	public void encode(short[] input, byte[] output) {
 		checkIfInitialized();
-		int succeeded = codec2_encode(input, output);
+		int succeeded = codec2Encode(input, output);
 		if(succeeded != 0) {
 			throw new CodecException("Library returned error");
 		}
@@ -49,7 +49,7 @@ public class Codec2 implements Codec {
 	@Override
 	public void decode(short[] output, byte[] input) {
 		checkIfInitialized();
-		int succeeded = codec2_decode(output, input);
+		int succeeded = codec2Decode(output, input);
 		if(succeeded != 0) {
 			throw new CodecException("Library returned error");
 		}
@@ -65,16 +65,16 @@ public class Codec2 implements Codec {
 		return BYTES_SIZE;
 	}
 
-	private native int codec2_init();
+	private native int codec2Init();
 	
-	private native int codec2_encode(short[] input, byte[] output);
+	private native int codec2Encode(short[] input, byte[] output);
 	
-	private native int codec2_decode(short[] output, byte[] input);
+	private native int codec2Decode(short[] output, byte[] input);
 	
-	private native void codec2_release();
+	private native void codec2Release();
 	
 	public void someTest() {
-		codec2_init();
+		codec2Init();
 		try {
 			Thread.sleep(1000);
 			
@@ -84,7 +84,7 @@ public class Codec2 implements Codec {
 			}
 			byte[] out = new byte[BYTES_SIZE];
 			
-			codec2_encode(in, out);
+			codec2Encode(in, out);
 			
 			for(int i = 0; i < out.length; i++) {
 				System.out.println(out[i]);
@@ -92,14 +92,14 @@ public class Codec2 implements Codec {
 			
 			short[] orig = new short[SAMPLES_SIZE];
 			
-			codec2_decode(orig, out);
+			codec2Decode(orig, out);
 			
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		codec2_release();
+		codec2Release();
 	}
 	
 	private void checkIfInitialized() {

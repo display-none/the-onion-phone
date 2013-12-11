@@ -11,7 +11,7 @@ public class ServiceLocator {
 
 	private ServiceHolder<AudioManagerImpl> audioMangerHolder;
 	
-	private final Context context;
+	private Context context;
 	
 	private ServiceLocator() {
 		context = TheOnionPhone.getContext();
@@ -20,7 +20,14 @@ public class ServiceLocator {
 	public synchronized AudioManager getAudioManager() {
 		if(audioMangerHolder == null) {
 			audioMangerHolder = new ServiceHolder<AudioManagerImpl>(context, AudioManagerImpl.class);
-		}		
+		}
+		
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return audioMangerHolder.getService();
 	}
 	

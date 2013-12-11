@@ -1,5 +1,6 @@
 package pl.net.hola.theonionphone.utils.locator;
 
+import pl.net.hola.theonionphone.common.exceptions.ServiceLocatorException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -27,14 +28,29 @@ public class ServiceHolder<T extends LocalService> {
 	public ServiceHolder(Context context, Class<T> clazz) {
 		this.context = context;
 		
-		context.bindService(new Intent(context, clazz), connection, Context.BIND_AUTO_CREATE);
+		boolean created = context.bindService(new Intent(context, clazz), connection, Context.BIND_AUTO_CREATE);
+		if(!created) {
+			throw new ServiceLocatorException("Service for class " + clazz.getName() + " cannot be created");
+		}
 	}
 	
 	T getService() {
+		if(service == null) {
+			tryToDealWithNullService();
+		}
 		return service;
 	}
 	
 	void cleanUp() {
 		context.unbindService(connection);
+	}
+	
+	private void tryToDealWithNullService() {
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) { }
+		if(service == null) {
+			throw new ServiceLocatorException("No service was bound");
+		}
 	}
 }

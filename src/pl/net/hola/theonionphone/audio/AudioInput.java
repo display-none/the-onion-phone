@@ -14,7 +14,7 @@ import pl.net.hola.theonionphone.common.exceptions.AudioManagerException;
 public class AudioInput {
 	
 	private final static int SAMPLE_RATE = 8000;
-	private final static int THREE_SECOND_BUFFER_SIZE_IN_BYTES = 3 * (SAMPLE_RATE * 2);
+	private final static int THREE_SECOND_BUFFER_SIZE_IN_BYTES = 7 * (SAMPLE_RATE * 2);
 	
 	private final Codec codec;
 	private final AudioRecord audioRecord;
@@ -33,10 +33,12 @@ public class AudioInput {
 	}
 	
 	public void startSending() {
+		checkWorkerNotNull();
 		worker.start();
 	}
-	
+
 	public void stopSending() {
+		checkWorkerNotNull();
 		worker.stopAndClose();
 		worker = null;
 	}
@@ -53,6 +55,12 @@ public class AudioInput {
 			return new PipedInputStream(outputStream);
 		} catch(IOException e) {
 			throw new AudioManagerException("Cannot instantiate stream");
+		}
+	}
+	
+	private void checkWorkerNotNull() {
+		if(worker == null) {
+			throw new AudioManagerException("not initialized");
 		}
 	}
 	
