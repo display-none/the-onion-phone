@@ -45,7 +45,9 @@ public class AudioOutputWorker extends Thread {
 	private void readFromStream(byte[] bytes) {
 		try {
 			inputStream.read(bytes);
-		} catch (IOException e) { }
+		} catch (IOException e) { 
+			running = false;
+		}
 	}
 
 	private void closeStream() {

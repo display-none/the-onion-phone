@@ -4,12 +4,14 @@ import android.content.Context;
 import pl.net.hola.theonionphone.TheOnionPhone;
 import pl.net.hola.theonionphone.audio.AudioManager;
 import pl.net.hola.theonionphone.audio.AudioManagerImpl;
+import pl.net.hola.theonionphone.network.AnonimityNetwork;
 
 public class ServiceLocator {
 	
 	private static ServiceLocator instance;
 
 	private ServiceHolder<AudioManagerImpl> audioMangerHolder;
+	
 	
 	private Context context;
 	
@@ -22,13 +24,12 @@ public class ServiceLocator {
 			audioMangerHolder = new ServiceHolder<AudioManagerImpl>(context, AudioManagerImpl.class);
 		}
 		
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		return audioMangerHolder.getService();
+	}
+	
+	public synchronized AnonimityNetwork getAnonimityNetwork() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	public static synchronized ServiceLocator getInstance() {
