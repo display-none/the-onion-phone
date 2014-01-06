@@ -44,6 +44,7 @@ public class TheOnionPhoneProtocol {
 	private static final int INTRODUCTION_MSG_SIZE = 80;
 	
 	private KeepAliveWorker keepAliveWorker;
+	private KeyExchangeHelper keyExchangeHelper = new KeyExchangeHelper();
 
 	/* 	OUTGOING  */
 	
@@ -56,6 +57,7 @@ public class TheOnionPhoneProtocol {
 		waitForAccept(inputStream);
 		
 		handleIncomingIntroductionIfRequested(callInfo, inputStream, outputStream);
+		keyExchangeHelper.initiateKeyExchange(callInfo, inputStream, outputStream);
 	}
 
 	private void sendAndReceiveHello(InputStream inputStream, OutputStream outputStream) {
@@ -262,6 +264,11 @@ public class TheOnionPhoneProtocol {
 		}
 	}
 	
+	private void startKeepAliveWorker(OutputStream outputStream) {
+		keepAliveWorker = new KeepAliveWorker(outputStream);
+		keepAliveWorker.start();
+	}
+	
 	
 	
 	
@@ -270,6 +277,7 @@ public class TheOnionPhoneProtocol {
 		sendMessage(ACCEPT_MSG, outputStream);
 		
 		handleOutgoingIntroductionIfRequested(callInfo, inputStream, outputStream);
+		keyExchangeHelper.handleKeyExchange(callInfo, inputStream, outputStream);
 	}
 	
 	private void handleOutgoingIntroductionIfRequested(CallInfo callInfo, InputStream inputStream, OutputStream outputStream) {
@@ -277,15 +285,11 @@ public class TheOnionPhoneProtocol {
 			proveIdentityToOtherParty(inputStream, outputStream);
 		}
 	}
-
-	private void startKeepAliveWorker(OutputStream outputStream) {
-		keepAliveWorker = new KeepAliveWorker(outputStream);
-		keepAliveWorker.start();
-	}
 	
-	public byte[] getSessionKey() {
-		byte[] key = new byte[KEY_SIZE];
-		return key;
+	
+	public void rejectCall(InputStream inputStream, OutputStream outputStream) {
+		keepAliveWorker.stopSending();
+		sendMessage(REJECT_MSG, outputStream);
 	}
 	
 	private static class KeepAliveWorker extends Thread {

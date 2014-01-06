@@ -47,7 +47,7 @@ public class CallHandler {
 			
 			theOnionPhoneProtocol.initiateOutgoingSession(callInfo, networkInputStream, networkOutputStream);
 			
-			srtpProtocol.initiateOutgoingSession(theOnionPhoneProtocol.getSessionKey(), audioManager.getCodec(), networkInputStream, networkOutputStream);
+			srtpProtocol.initiateOutgoingSession(callInfo.getTxKey(), callInfo.getRxKey(), audioManager.getCodec(), networkInputStream, networkOutputStream);
 			
 			InputStream applicationInputStream = getApplicationInputStream();
 			OutputStream applicationOutputStream = getApplicationOutputStream();

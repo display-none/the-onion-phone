@@ -24,13 +24,13 @@ public class SrtpProtocol {
 	private SrtpWrapper wrapper;
 	private SrtpUnwrapper unwrapper;
 
-	public void initiateOutgoingSession(byte[] key, Codec codec, InputStream networkInputStream, OutputStream networkOutputStream) {
+	public void initiateOutgoingSession(byte[] txKey, byte[] rxKey, Codec codec, InputStream networkInputStream, OutputStream networkOutputStream) {
 		packetSizeInBytes = SRTP_OVERHEAD_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize());
 		payloadSizeInBytes = codec.getBytesSize();
 		
 		byte[] senderSalt = getRandomSalt();
 		
-		initSender(key, senderSalt, codec.getCodecType(), codec.getSamplesSize());
+		initSender(txKey, senderSalt, codec.getCodecType(), codec.getSamplesSize());
 		int senderSsrc = getSsrc();
 		
 		sendSsrcAndSalt(networkOutputStream, senderSalt, senderSsrc);
@@ -38,7 +38,7 @@ public class SrtpProtocol {
 		int receiverSsrc = receiveSsrc(networkInputStream);
 		byte[] receiverSalt = receiveSalt(networkInputStream);
 		
-		initReceiver(receiverSsrc, key, receiverSalt);
+		initReceiver(receiverSsrc, rxKey, receiverSalt);
 		srtpInitialized = true;
 	}
 	

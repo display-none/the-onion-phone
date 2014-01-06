@@ -31,13 +31,18 @@ public class ProtocolUtils {
 	}
 	
 	public static void sendMessageWithSizeFirst(byte[] msg, OutputStream outputStream) {
+		DataOutputStream dos = new DataOutputStream(outputStream);
+		sendMessageWithSizeFirst(msg, dos);
+	}
+	
+	public static void sendMessageWithSizeFirst(byte[] msg, DataOutputStream dataOutputStream) {
 		try {
-			DataOutputStream dos = new DataOutputStream(outputStream);
+			DataOutputStream dos = new DataOutputStream(dataOutputStream);
 			dos.writeInt(msg.length);
 		} catch (IOException e) {
 			throw new MainProtocolException("error while sending message size");
 		}
-		sendMessage(msg, outputStream);
+		sendMessage(msg, dataOutputStream);
 	}
 	
 	public static void receiveSpecificMessage(byte[] msg, InputStream inputStream) {
@@ -57,11 +62,15 @@ public class ProtocolUtils {
 	}
 	
 	public static byte[] receiveMessageWithSizeFirst(InputStream inputStream) {
+		DataInputStream dis = new DataInputStream(inputStream);
+		return receiveMessageWithSizeFirst(dis);
+	}
+	
+	public static byte[] receiveMessageWithSizeFirst(DataInputStream dataInputStream) {
 		try {
-			DataInputStream dis = new DataInputStream(inputStream);
-			int size = dis.readInt();
+			int size = dataInputStream.readInt();
 			byte[] msg = new byte[size];
-			receiveMessageInto(msg, inputStream);
+			receiveMessageInto(msg, dataInputStream);
 			return msg;
 		} catch (IOException e) {
 			throw new MainProtocolException("error while receiving message size");
