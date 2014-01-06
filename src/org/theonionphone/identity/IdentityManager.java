@@ -1,5 +1,7 @@
 package org.theonionphone.identity;
 
+import java.security.KeyPair;
+
 public interface IdentityManager {
 	
 	void createNewIdentity();
@@ -9,4 +11,6 @@ public interface IdentityManager {
 	void exportIdentity();
 	
 	Identity getIdentity();
+	
+	KeyPair getMyKeys();
 }

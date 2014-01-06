@@ -7,4 +7,8 @@ public class ProtocolException extends RuntimeException {
 	public ProtocolException(String msg) {
 		super(msg);
 	}
+	
+	public ProtocolException(String msg, Throwable t) {
+		super(msg, t);
+	}
 }

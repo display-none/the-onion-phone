@@ -1,25 +1,24 @@
 package org.theonionphone.protocol;
 
-import org.theonionphone.identity.Identity;
+import org.theonionphone.common.CallInfo;
 import org.theonionphone.utils.locator.LocalService;
 
 public class ProtocolManagementImpl extends LocalService implements ProtocolManagement {
 
-	private TheOnionPhoneProtocol mainProtocol;
-	
-	public ProtocolManagementImpl() {
-		this.mainProtocol = new TheOnionPhoneProtocol();
-	}
-
 	@Override
-	public void startCall(Identity identity) {
-		
+	public void startCall(CallInfo callInfo) {
+		TheOnionPhoneProtocol mainProtocol = new TheOnionPhoneProtocol();
+		SrtpProtocol srtpProtocol = new SrtpProtocol();
+		CallHandler callHandler = new CallHandler(mainProtocol, srtpProtocol);
+		callHandler.startCall(callInfo);
 	}
 
 	@Override
 	public void handleIncomingCall() {
-		// TODO Auto-generated method stub
-		
+		TheOnionPhoneProtocol mainProtocol = new TheOnionPhoneProtocol();
+		SrtpProtocol srtpProtocol = new SrtpProtocol();
+		CallHandler callHandler = new CallHandler(mainProtocol, srtpProtocol);
+		callHandler.handleIncomingCall();
 	}
 	
 }

@@ -9,6 +9,7 @@ import java.io.InputStream;
 import org.theonionphone.R;
 import org.theonionphone.audio.AudioManager;
 import org.theonionphone.audio.AudioManagerImpl;
+import org.theonionphone.common.CallInfo;
 import org.theonionphone.identity.Identity;
 import org.theonionphone.network.AnonimityNetwork;
 import org.theonionphone.protocol.ProtocolManagement;
@@ -100,18 +101,24 @@ public class MainActivity extends Activity {
         	public void run() {
         		
         		try {
-					Thread.sleep(4000);
+					Thread.sleep(7000);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
         		
+        		ServiceLocator.getInstance().cleanUp();
+        		
         		AnonimityNetwork anonimityNetwork = ServiceLocator.getInstance().getAnonimityNetwork();
                 anonimityNetwork.startConnectionListener();
                 
                 ProtocolManagement protocolManagement = ServiceLocator.getInstance().getProtocolManagement();
-                Identity identity = new Identity("localhost");
-                protocolManagement.startCall(identity);
+                Identity identity = new Identity();
+                identity.setNetworkIdentifier("localhost");
+                CallInfo callInfo = new CallInfo();
+                callInfo.setIdentity(identity);
+                callInfo.setShouldIntroduce(true);
+                protocolManagement.startCall(callInfo);
                 
                
         	};

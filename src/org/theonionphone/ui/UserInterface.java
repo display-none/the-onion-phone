@@ -1,8 +1,10 @@
 package org.theonionphone.ui;
 
+import org.theonionphone.common.CallInfo;
+
 public interface UserInterface {
 
-	void handleIncomingCall();
+	void handleIncomingCall(CallInfo callInfo);
 	
 	void handleIncomingMessage();
 }

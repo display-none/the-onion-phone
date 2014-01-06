@@ -1,10 +1,10 @@
 package org.theonionphone.protocol;
 
-import org.theonionphone.identity.Identity;
+import org.theonionphone.common.CallInfo;
 
 public interface ProtocolManagement {
 
-	void startCall(Identity identity);
+	void startCall(CallInfo callInfo);
 
 	void handleIncomingCall();
 	

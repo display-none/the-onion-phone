@@ -1,5 +1,8 @@
 package org.theonionphone.utils.locator;
 
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+
 import org.theonionphone.common.exceptions.ServiceLocatorException;
 
 import android.content.ComponentName;
@@ -10,6 +13,8 @@ import android.os.IBinder;
 
 public class ServiceHolder<T extends LocalService> {
 
+	private static final long SERVICE_CREATION_TIMEOUT_SECONDS = 10;
+	private Semaphore serviceCreationSemaphore = new Semaphore(0);
 	private T service;
 	private final Context context;
 	
@@ -23,16 +28,22 @@ public class ServiceHolder<T extends LocalService> {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder binder) {
 			service = (T) ((T.LocalBinder) binder).getService();
+			serviceCreationSemaphore.release();
 		}
 	};
 	
-	public ServiceHolder(Context context, Class<T> clazz) {
+	public ServiceHolder(final Context context, final Class<T> clazz) {
 		this.context = context;
 		
-		boolean created = context.bindService(new Intent(context, clazz), connection, Context.BIND_AUTO_CREATE);
-		if(!created) {
-			throw new ServiceLocatorException("Service for class " + clazz.getName() + " cannot be created");
-		}
+//		(new Thread() {
+//			public void run() {
+				boolean created = context.bindService(new Intent(context, clazz), connection, Context.BIND_AUTO_CREATE);
+				if(!created) {
+					throw new ServiceLocatorException("Service for class " + clazz.getName() + " cannot be created");
+				}
+//			};
+//		}).start();
+		
 	}
 	
 	T getService() {
@@ -44,11 +55,12 @@ public class ServiceHolder<T extends LocalService> {
 	
 	void cleanUp() {
 		context.unbindService(connection);
+		serviceCreationSemaphore.drainPermits();
 	}
 	
 	private void tryToDealWithNullService() {
 		try {
-			Thread.sleep(14000);
+			serviceCreationSemaphore.tryAcquire(1, SERVICE_CREATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException e) { }
 		if(service == null) {
 			throw new ServiceLocatorException("No service was bound");

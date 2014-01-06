@@ -19,13 +19,14 @@ JNIEXPORT jint JNICALL Java_org_theonionphone_protocol_SrtpProtocol_initSender
 
 	// copy key and salt to an array needed by srtp
 	(*env)->GetByteArrayRegion(env, keyByteArray, 0, KEY_SIZE, key);
-	(*env)->GetByteArrayRegion(env, saltByteArray, 0, SALT_SIZE, &key[KEY_SIZE]);
+	(*env)->GetByteArrayRegion(env, saltByteArray, 0, SALT_SIZE, key + KEY_SIZE);
 
 	//initialize rtp
-	err_status_t status = initRtp(rtpContext, codecType, sampleCount);
-		if(status) {
-			return status;
-		}
+	err_status_t status = initRtp(&rtpContext, codecType, sampleCount);
+	if(status) {
+		return status;
+	}
+
 	//initialize srtp
 	status = srtp_init();
 	if(status) {

@@ -8,6 +8,7 @@ import java.net.Socket;
 import org.theonionphone.common.exceptions.ConnectionException;
 import org.theonionphone.identity.Identity;
 import org.theonionphone.protocol.ProtocolManagement;
+import org.theonionphone.utils.TorServiceUtils;
 import org.theonionphone.utils.locator.LocalService;
 import org.theonionphone.utils.locator.ServiceLocator;
 

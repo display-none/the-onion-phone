@@ -7,10 +7,12 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
 import org.theonionphone.audio.AudioManager;
+import org.theonionphone.common.CallInfo;
 import org.theonionphone.common.exceptions.CallException;
 import org.theonionphone.common.exceptions.ConnectionException;
 import org.theonionphone.identity.Identity;
 import org.theonionphone.network.AnonimityNetwork;
+import org.theonionphone.ui.UserInterface;
 import org.theonionphone.utils.locator.ServiceLocator;
 
 public class CallHandler {
@@ -20,11 +22,12 @@ public class CallHandler {
 	
 	private final AudioManager audioManager;
 	private final AnonimityNetwork anonimityNetwork;
+	private final UserInterface userInterface;
 	
 	private Connector applicationToNetworkConnector;
 	private Connector networkToApplicationConnector;
 	
-	private boolean callOngoing = false;
+	private CallStatus callStatus = CallStatus.NO_CALL;
 	
 	public CallHandler(TheOnionPhoneProtocol theOnionPhoneProtocol, SrtpProtocol srtpProtocol) {
 		this.theOnionPhoneProtocol = theOnionPhoneProtocol;
@@ -32,16 +35,17 @@ public class CallHandler {
 		
 		this.audioManager = ServiceLocator.getInstance().getAudioManager();
 		this.anonimityNetwork = ServiceLocator.getInstance().getAnonimityNetwork();
+		this.userInterface = ServiceLocator.getInstance().getUserInterface();
 	}
 	
-	public void startCall(Identity identity) {
-		checkIfCallIsNotOngoing();
-		boolean connected = connectTo(identity);
+	public void startCall(CallInfo callInfo) {
+		assertNoCall();
+		boolean connected = connectTo(callInfo.getIdentity());
 		if(connected) {
 			InputStream networkInputStream = anonimityNetwork.getInputStream();
 			OutputStream networkOutputStream = anonimityNetwork.getOutputStream();
 			
-			theOnionPhoneProtocol.initiateSession(networkInputStream, networkOutputStream);
+			theOnionPhoneProtocol.initiateOutgoingSession(callInfo, networkInputStream, networkOutputStream);
 			
 			srtpProtocol.initiateOutgoingSession(theOnionPhoneProtocol.getSessionKey(), audioManager.getCodec(), networkInputStream, networkOutputStream);
 			
@@ -56,17 +60,37 @@ public class CallHandler {
 			applicationToNetworkConnector.start();
 			networkToApplicationConnector.start();
 			
-			callOngoing = true;
+			callStatus = CallStatus.ONGOING;
 		}
 	}
 	
+	public void handleIncomingCall() {
+		InputStream networkInputStream = anonimityNetwork.getInputStream();
+		OutputStream networkOutputStream = anonimityNetwork.getOutputStream();
+		
+		CallInfo callInfo = theOnionPhoneProtocol.initiateIncomingSession(networkInputStream, networkOutputStream);
+		
+		callStatus = CallStatus.INITIALIZED;
+		
+		userInterface.handleIncomingCall(callInfo);
+	}
+	
+	public void acceptCall(CallInfo callInfo) {
+		assertCallIsInitialized();
+		
+		InputStream networkInputStream = anonimityNetwork.getInputStream();
+		OutputStream networkOutputStream = anonimityNetwork.getOutputStream();
+		
+		theOnionPhoneProtocol.acceptCall(callInfo, networkInputStream, networkOutputStream);
+	}
+	
 	public void endCall() {
-		checkIfCallIsOngoing();
+		assertCallIsOngoing();
 		applicationToNetworkConnector.stopAndClose();
 		networkToApplicationConnector.stopAndClose();
 		applicationToNetworkConnector = null;
 		networkToApplicationConnector = null;
-		callOngoing = false;
+		callStatus = CallStatus.NO_CALL;
 	}
 	
 	public void endCallWithError(String msg) {
@@ -98,15 +122,25 @@ public class CallHandler {
 		return true;
 	}
 	
-	private void checkIfCallIsOngoing() {
-		if(callOngoing == false || applicationToNetworkConnector == null || networkToApplicationConnector == null) {
+	private void assertCallIsOngoing() {
+		if(callStatus != CallStatus.ONGOING || applicationToNetworkConnector == null || networkToApplicationConnector == null) {
 			throw new CallException("There is no ongoing call to end");
 		}
 	}
 	
-	private void checkIfCallIsNotOngoing() {
-		if(callOngoing == true || applicationToNetworkConnector != null || networkToApplicationConnector != null) {
+	private void assertCallIsInitialized() {
+		if(callStatus != CallStatus.INITIALIZED) {
+			throw new CallException("no call was initialized");
+		}
+	}
+	
+	private void assertNoCall() {
+		if(callStatus != CallStatus.NO_CALL || applicationToNetworkConnector != null || networkToApplicationConnector != null) {
 			throw new CallException("Cannot start a call. There is already an ongoing call");
 		}
+	}
+	
+	private enum CallStatus {
+		NO_CALL, INITIALIZED, ONGOING
 	}
 }

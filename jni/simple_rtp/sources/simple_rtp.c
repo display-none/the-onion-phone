@@ -27,17 +27,17 @@
 #include <simple_rtp.h>
 
 
- err_status_t initRtp(rtp_context_t* ctx, int codecType, int sampleCount) {
-	ctx = malloc(sizeof(rtp_context_t));
+ err_status_t initRtp(rtp_context_t** ctx, int codecType, int sampleCount) {
+	(*ctx) = malloc(sizeof(rtp_context_t));
 
-	ctx->mCodecMagic = (0xA000 | codecType) << 16;	//version - 2, padding - 1, payload type - codecType
+	(*ctx)->mCodecMagic = (0xA000 | codecType) << 16;	//version - 2, padding - 1, payload type - codecType
 
-	ctx->mSampleCount = sampleCount;
+	(*ctx)->mSampleCount = sampleCount;
 
 	int gRandom = open("/dev/urandom", O_RDONLY);
-	read(gRandom, &ctx->mSequence, sizeof(ctx->mSequence));
-	read(gRandom, &ctx->mTimestamp, sizeof(ctx->mTimestamp));
-	read(gRandom, &ctx->mSsrc, sizeof(ctx->mSsrc));
+	read(gRandom, &(*ctx)->mSequence, sizeof((*ctx)->mSequence));
+	read(gRandom, &(*ctx)->mTimestamp, sizeof((*ctx)->mTimestamp));
+	read(gRandom, &(*ctx)->mSsrc, sizeof((*ctx)->mSsrc));
 
 	return 0;
 }

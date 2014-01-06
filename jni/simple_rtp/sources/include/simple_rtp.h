@@ -19,7 +19,7 @@ typedef struct {
  * requires codecType - payload type for rtp
  * and sampleCount - count of samples in one packet
  */
- err_status_t initRtp(rtp_context_t* ctx, int codecType, int sampleCount);
+ err_status_t initRtp(rtp_context_t** ctx, int codecType, int sampleCount);
 
 
 /*
