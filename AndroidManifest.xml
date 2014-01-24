@@ -31,7 +31,10 @@
         <service android:name="org.theonionphone.audio.AudioManagerImpl"></service>
         <service android:name="org.theonionphone.protocol.ProtocolManagementImpl"></service>
         <service android:name="org.theonionphone.network.TorNetwork"></service>
+        <service android:name="org.theonionphone.ui.UserInterfaceImpl"></service>
+        <service android:name="org.theonionphone.identity.IdentityManagerImpl"></service>
         <service android:name="org.theonionphone.network.ConnectionListener"></service>
+        <service android:name="org.theonionphone.audio.DummyAudioManager"></service>
         
         </application>
 

@@ -3,7 +3,6 @@ package org.theonionphone.utils;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.theonionphone.common.exceptions.MainProtocolException;
@@ -45,7 +44,7 @@ public class ProtocolUtils {
 		sendMessage(msg, dataOutputStream);
 	}
 	
-	public static void receiveSpecificMessage(byte[] msg, InputStream inputStream) {
+	public static void receiveSpecificMessage(byte[] msg, DataInputStream inputStream) {
 		byte[] receivedMsg = new byte[msg.length];
 		receiveMessageInto(receivedMsg, inputStream);
 		if(!compareIfIdentical(msg, receivedMsg)) {
@@ -53,17 +52,12 @@ public class ProtocolUtils {
 		}
 	}
 	
-	public static void receiveMessageInto(byte[] msg, InputStream inputStream) {
+	public static void receiveMessageInto(byte[] msg, DataInputStream inputStream) {
 		try {
-			inputStream.read(msg);
+			inputStream.readFully(msg);
 		} catch (IOException e) {
 			throw new MainProtocolException("error while receiving message");
 		}
-	}
-	
-	public static byte[] receiveMessageWithSizeFirst(InputStream inputStream) {
-		DataInputStream dis = new DataInputStream(inputStream);
-		return receiveMessageWithSizeFirst(dis);
 	}
 	
 	public static byte[] receiveMessageWithSizeFirst(DataInputStream dataInputStream) {

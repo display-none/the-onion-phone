@@ -47,4 +47,10 @@ public class AudioManagerImpl extends LocalService implements AudioManager {
 	public Codec getCodec() {
 		return codec;
 	}
+
+	@Override
+	public void next() {
+		// TODO Auto-generated method stub
+		
+	}
 }

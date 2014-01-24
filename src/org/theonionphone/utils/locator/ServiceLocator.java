@@ -3,6 +3,7 @@ package org.theonionphone.utils.locator;
 import org.theonionphone.TheOnionPhone;
 import org.theonionphone.audio.AudioManager;
 import org.theonionphone.audio.AudioManagerImpl;
+import org.theonionphone.audio.DummyAudioManager;
 import org.theonionphone.identity.IdentityManager;
 import org.theonionphone.identity.IdentityManagerImpl;
 import org.theonionphone.network.AnonimityNetwork;
@@ -14,11 +15,19 @@ import org.theonionphone.ui.UserInterfaceImpl;
 
 import android.content.Context;
 
+/**
+ * Utility for service location.
+ * 
+ * As a singleton will lazily create services (more specifically ServiceHolders) 
+ * and hold references to them until cleanUp() is called.
+ *
+ */
 public class ServiceLocator {
 	
 	private static ServiceLocator instance;
 
 	private ServiceHolder<AudioManagerImpl> audioMangerHolder;
+//	private ServiceHolder<DummyAudioManager> audioMangerHolder;
 	private ServiceHolder<TorNetwork> anonimityNetworkHolder;
 	private ServiceHolder<IdentityManagerImpl> identityManagerHolder;
 	private ServiceHolder<ProtocolManagementImpl> protocolManagementHolder;
@@ -41,6 +50,7 @@ public class ServiceLocator {
 	public synchronized AudioManager getAudioManager() {
 		if(audioMangerHolder == null) {
 			audioMangerHolder = new ServiceHolder<AudioManagerImpl>(context, AudioManagerImpl.class);
+//			audioMangerHolder = new ServiceHolder<DummyAudioManager>(context, DummyAudioManager.class);
 		}
 		
 		return audioMangerHolder.getService();
@@ -77,6 +87,9 @@ public class ServiceLocator {
 		return instance;
 	}
 	
+	/**
+	 * Unbinds all bound services.
+	 */
 	public void cleanUp() {
 		cleanUpHolder(anonimityNetworkHolder);
 		cleanUpHolder(audioMangerHolder);

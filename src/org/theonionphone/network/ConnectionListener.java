@@ -44,7 +44,9 @@ public class ConnectionListener extends Service implements Runnable {
 	@Override
 	public void onDestroy() {
 		try {
-			serverSocket.close();
+			if(serverSocket != null) {
+				serverSocket.close();
+			}
 		} catch (IOException e) { }
 	}
 }

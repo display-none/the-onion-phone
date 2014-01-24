@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import org.theonionphone.audio.codecs.Codec;
 
 import android.media.AudioRecord;
+import android.os.Process;
+import android.util.Log;
 
 public class AudioInputWorker extends Thread {
 	
@@ -23,14 +25,18 @@ public class AudioInputWorker extends Thread {
 
 	@Override
 	public void run() {
+		Process.setThreadPriority(-16);
+		
 		short[] samples = new short[codec.getSamplesSize()];
 		byte[] bytes = new byte[codec.getBytesSize()];
 		
 		codec.initialize();
 		audioRecord.startRecording();
-		
+
+		int i = 1;
 		while(running) {
 			audioRecord.read(samples, 0, samples.length);
+			Log.i("packet", "send " + i++);
 			codec.encode(samples, bytes);
 			writeToStream(bytes);
 		}

@@ -11,6 +11,7 @@ import org.theonionphone.audio.AudioInputWorker;
 import org.theonionphone.audio.codecs.Codec;
 import org.theonionphone.common.exceptions.AudioManagerException;
 
+import android.util.Log;
 import junit.framework.TestCase;
 
 

@@ -2,6 +2,7 @@ package org.theonionphone.protocol;
 
 import static org.theonionphone.utils.ProtocolUtils.*;
 
+import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.InvalidKeyException;
@@ -24,7 +25,6 @@ import org.theonionphone.utils.locator.ServiceLocator;
 
 public class TheOnionPhoneProtocol {
 
-	private static final int KEY_SIZE = 16;
 								//hello msgs
 	private static final byte[] HELLO_MSG = {'H', 'e', 'l', 'l', 'o', ' ', ' ', ' '};
 	private static final byte[] HELLO_ACK_MSG = {'H', 'e', 'l', 'l', 'o', 'A', 'C', 'K'};
@@ -49,30 +49,32 @@ public class TheOnionPhoneProtocol {
 	/* 	OUTGOING  */
 	
 	public void initiateOutgoingSession(CallInfo callInfo, InputStream inputStream, OutputStream outputStream) {
-		sendAndReceiveHello(inputStream, outputStream);
-		sendAndReceiveVersion(inputStream, outputStream);
-		handleOutgoingIntroduction(callInfo, inputStream, outputStream);
-		handleOutgoingRequestForIntroduction(callInfo, inputStream, outputStream);
+		DataInputStream dataInputStream = new DataInputStream(inputStream);
 		
-		waitForAccept(inputStream);
+		sendAndReceiveHello(dataInputStream, outputStream);
+		sendAndReceiveVersion(dataInputStream, outputStream);
+		handleOutgoingIntroduction(callInfo, dataInputStream, outputStream);
+		handleOutgoingRequestForIntroduction(callInfo, dataInputStream, outputStream);
 		
-		handleIncomingIntroductionIfRequested(callInfo, inputStream, outputStream);
-		keyExchangeHelper.initiateKeyExchange(callInfo, inputStream, outputStream);
+		waitForAccept(dataInputStream);
+		
+		handleIncomingIntroductionIfRequested(callInfo, dataInputStream, outputStream);
+		keyExchangeHelper.initiateKeyExchange(callInfo, dataInputStream, outputStream);
 	}
 
-	private void sendAndReceiveHello(InputStream inputStream, OutputStream outputStream) {
+	private void sendAndReceiveHello(DataInputStream inputStream, OutputStream outputStream) {
 		sendMessage(HELLO_MSG, outputStream);
 		receiveSpecificMessage(HELLO_ACK_MSG, inputStream);
 		receiveSpecificMessage(HELLO_MSG, inputStream);
 		sendMessage(HELLO_ACK_MSG, outputStream);
 	}
 	
-	private void sendAndReceiveVersion(InputStream inputStream, OutputStream outputStream) {
+	private void sendAndReceiveVersion(DataInputStream inputStream, OutputStream outputStream) {
 		sendMessage(VERSION_MSG, outputStream);
 		receiveVersion(inputStream);
 	}
 	
-	private void handleOutgoingIntroduction(CallInfo callInfo, InputStream inputStream, OutputStream outputStream) {
+	private void handleOutgoingIntroduction(CallInfo callInfo, DataInputStream inputStream, OutputStream outputStream) {
 		if(callInfo.getShouldIntroduce()) {
 			sendMessage(INTRODUCTION_MSG, outputStream);
 			
@@ -82,7 +84,7 @@ public class TheOnionPhoneProtocol {
 		}
 	}
 
-	private void proveIdentityToOtherParty(InputStream inputStream, OutputStream outputStream) {
+	private void proveIdentityToOtherParty(DataInputStream inputStream, OutputStream outputStream) {
 		IdentityManager identityManager = ServiceLocator.getInstance().getIdentityManager();
 		KeyPair keyPair = identityManager.getMyKeys();
 		
@@ -112,7 +114,7 @@ public class TheOnionPhoneProtocol {
 		}
 	}
 	
-	private void handleOutgoingRequestForIntroduction(CallInfo callInfo, InputStream inputStream, OutputStream outputStream) {
+	private void handleOutgoingRequestForIntroduction(CallInfo callInfo, DataInputStream inputStream, OutputStream outputStream) {
 		if(callInfo.getRequiresIntroduction()) {
 			sendMessage(INTRODUCTION_REQ_MSG, outputStream);
 		} else {
@@ -120,7 +122,7 @@ public class TheOnionPhoneProtocol {
 		}
 	}
 	
-	private void waitForAccept(InputStream inputStream) {
+	private void waitForAccept(DataInputStream inputStream) {
 		while(true) {
 			byte[] msg = new byte[ACCEPT_MSG.length];
 			receiveMessageInto(msg, inputStream);
@@ -139,7 +141,7 @@ public class TheOnionPhoneProtocol {
 		}
 	}
 	
-	private void handleIncomingIntroductionIfRequested(CallInfo callInfo, InputStream inputStream, OutputStream outputStream) {
+	private void handleIncomingIntroductionIfRequested(CallInfo callInfo, DataInputStream inputStream, OutputStream outputStream) {
 		if(callInfo.getRequiresIntroduction()) {
 			PublicKey publicKey = receiveAndVerifyPublicKey(inputStream, outputStream);
 			validateKeyAgainstExpected(callInfo.getIdentity().getPublicKey(), publicKey);
@@ -162,37 +164,39 @@ public class TheOnionPhoneProtocol {
 	/* 	INCOMING  */
 	
 	public CallInfo initiateIncomingSession(InputStream inputStream, OutputStream outputStream) {
+		DataInputStream dataInputStream = new DataInputStream(inputStream);
+		
 		CallInfo callInfo = new CallInfo();
-		receiveAndSendHello(inputStream, outputStream);
-		receiveAndSendVersion(inputStream, outputStream);
-		Identity identity = handleIncomingIntroduction(inputStream, outputStream);
+		receiveAndSendHello(dataInputStream, outputStream);
+		receiveAndSendVersion(dataInputStream, outputStream);
+		Identity identity = handleIncomingIntroduction(dataInputStream, outputStream);
 		callInfo.setIdentity(identity);
-		boolean requiresIntroduction = handleIncomingRequestForIntroduction(inputStream, outputStream);
+		boolean requiresIntroduction = handleIncomingRequestForIntroduction(dataInputStream, outputStream);
 		callInfo.setRequiresIntroduction(requiresIntroduction);
 		startKeepAliveWorker(outputStream);
 		
 		return callInfo;
 	}
 
-	private void receiveAndSendHello(InputStream inputStream, OutputStream outputStream) {
+	private void receiveAndSendHello(DataInputStream inputStream, OutputStream outputStream) {
 		receiveSpecificMessage(HELLO_MSG, inputStream);
 		sendMessage(HELLO_ACK_MSG, outputStream);
 		sendMessage(HELLO_MSG, outputStream);
 		receiveSpecificMessage(HELLO_ACK_MSG, inputStream);
 	}
 	
-	private void receiveAndSendVersion(InputStream inputStream, OutputStream outputStream) {
+	private void receiveAndSendVersion(DataInputStream inputStream, OutputStream outputStream) {
 		receiveVersion(inputStream);
 		sendMessage(VERSION_MSG, outputStream);
 	}
 	
-	private void receiveVersion(InputStream inputStream) {
+	private void receiveVersion(DataInputStream inputStream) {
 		byte[] receivedMsg = new byte[VERSION_MSG.length];
 		receiveMessageInto(receivedMsg, inputStream);
 		//it's the first version, so we don't give a damn
 	}
 	
-	private Identity handleIncomingIntroduction(InputStream inputStream, OutputStream outputStream) {
+	private Identity handleIncomingIntroduction(DataInputStream inputStream, OutputStream outputStream) {
 		Identity identity = new Identity();
 		if(isOtherPartyIntroducing(inputStream)) {
 			PublicKey publicKey = receiveAndVerifyPublicKey(inputStream, outputStream);
@@ -201,7 +205,7 @@ public class TheOnionPhoneProtocol {
 		return identity;
 	}
 
-	private boolean isOtherPartyIntroducing(InputStream inputStream) {
+	private boolean isOtherPartyIntroducing(DataInputStream inputStream) {
 		byte[] introductionType = new byte[INTRODUCTION_MSG.length];
 		receiveMessageInto(introductionType, inputStream);
 		if(compareIfIdentical(INTRODUCTION_MSG, introductionType)) {
@@ -213,7 +217,7 @@ public class TheOnionPhoneProtocol {
 		}
 	}
 
-	private PublicKey receiveAndVerifyPublicKey(InputStream inputStream, OutputStream outputStream) {
+	private PublicKey receiveAndVerifyPublicKey(DataInputStream inputStream, OutputStream outputStream) {
 		//receive other party's public key
 		byte[] publicKeyEncoded = receiveMessageWithSizeFirst(inputStream);
 		PublicKey publicKey;
@@ -252,7 +256,7 @@ public class TheOnionPhoneProtocol {
 		return publicKey;
 	}
 	
-	private boolean handleIncomingRequestForIntroduction(InputStream inputStream, OutputStream outputStream) {
+	private boolean handleIncomingRequestForIntroduction(DataInputStream inputStream, OutputStream outputStream) {
 		byte[] introductionReqType = new byte[INTRODUCTION_REQ_MSG.length];
 		receiveMessageInto(introductionReqType, inputStream);
 		if(compareIfIdentical(INTRODUCTION_REQ_MSG, introductionReqType)) {
@@ -276,11 +280,12 @@ public class TheOnionPhoneProtocol {
 		keepAliveWorker.stopSending();
 		sendMessage(ACCEPT_MSG, outputStream);
 		
-		handleOutgoingIntroductionIfRequested(callInfo, inputStream, outputStream);
-		keyExchangeHelper.handleKeyExchange(callInfo, inputStream, outputStream);
+		DataInputStream dataInputStream = new DataInputStream(inputStream);
+		handleOutgoingIntroductionIfRequested(callInfo, dataInputStream, outputStream);
+		keyExchangeHelper.handleKeyExchange(callInfo, dataInputStream, outputStream);
 	}
 	
-	private void handleOutgoingIntroductionIfRequested(CallInfo callInfo, InputStream inputStream, OutputStream outputStream) {
+	private void handleOutgoingIntroductionIfRequested(CallInfo callInfo, DataInputStream inputStream, OutputStream outputStream) {
 		if(callInfo.getRequiresIntroduction()) {
 			proveIdentityToOtherParty(inputStream, outputStream);
 		}

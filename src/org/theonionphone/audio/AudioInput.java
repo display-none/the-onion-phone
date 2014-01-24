@@ -15,7 +15,7 @@ import android.media.MediaRecorder.AudioSource;
 public class AudioInput {
 	
 	private final static int SAMPLE_RATE = 8000;
-	private final static int THREE_SECOND_BUFFER_SIZE_IN_BYTES = 7 * (SAMPLE_RATE * 2);
+	private final static int SEVEN_SECOND_BUFFER_SIZE_IN_BYTES = 7 * (SAMPLE_RATE * 2);
 	
 	private final Codec codec;
 	private final AudioRecord audioRecord;
@@ -24,7 +24,7 @@ public class AudioInput {
 	public AudioInput(Codec codec) {
 		this.codec = codec;
 		this.audioRecord = new AudioRecord(AudioSource.VOICE_COMMUNICATION, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, 
-				AudioFormat.ENCODING_PCM_16BIT, THREE_SECOND_BUFFER_SIZE_IN_BYTES);
+				AudioFormat.ENCODING_PCM_16BIT, SEVEN_SECOND_BUFFER_SIZE_IN_BYTES);
 	}
 	
 	public InputStream getStream() {

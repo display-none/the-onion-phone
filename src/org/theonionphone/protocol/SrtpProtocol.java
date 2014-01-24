@@ -13,10 +13,13 @@ import org.theonionphone.audio.codecs.Codec;
 import org.theonionphone.common.exceptions.AudioManagerException;
 import org.theonionphone.common.exceptions.ProtocolException;
 
+import android.util.Log;
+
 public class SrtpProtocol {
 
 	private static final int SALT_SIZE = 14;
-	private static final int SRTP_OVERHEAD_IN_BYTES = 16;	//12-byte header plus 4-byte authorization tag
+	private static final int SRTP_HEADER_SIZE_IN_BYTES = 12;
+	private static final int SRTP_AUTHORIZATION_TAG_SIZE_IN_BYTES = 4;
 	private int packetSizeInBytes;
 	private int payloadSizeInBytes;
 	private boolean srtpInitialized = false;
@@ -25,45 +28,67 @@ public class SrtpProtocol {
 	private SrtpUnwrapper unwrapper;
 
 	public void initiateOutgoingSession(byte[] txKey, byte[] rxKey, Codec codec, InputStream networkInputStream, OutputStream networkOutputStream) {
-		packetSizeInBytes = SRTP_OVERHEAD_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize());
+		packetSizeInBytes = SRTP_HEADER_SIZE_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize()) + SRTP_AUTHORIZATION_TAG_SIZE_IN_BYTES;
+		int rtpPacketSizeInBytes = SRTP_HEADER_SIZE_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize());
 		payloadSizeInBytes = codec.getBytesSize();
 		
 		byte[] senderSalt = getRandomSalt();
 		
-		initSender(txKey, senderSalt, codec.getCodecType(), codec.getSamplesSize());
+		initSender(txKey, senderSalt, codec.getCodecType(), codec.getSamplesSize(), payloadSizeInBytes, rtpPacketSizeInBytes, packetSizeInBytes);
 		int senderSsrc = getSsrc();
 		
 		sendSsrcAndSalt(networkOutputStream, senderSalt, senderSsrc);
 		
-		int receiverSsrc = receiveSsrc(networkInputStream);
-		byte[] receiverSalt = receiveSalt(networkInputStream);
+		DataInputStream networkDataInputStream = new DataInputStream(networkInputStream);
+		int receiverSsrc = receiveSsrc(networkDataInputStream);
+		byte[] receiverSalt = receiveSalt(networkDataInputStream);
 		
 		initReceiver(receiverSsrc, rxKey, receiverSalt);
 		srtpInitialized = true;
+		
+		Log.i("keys", "tx key " + printKey(txKey));
+		Log.i("keys", "tx salt " + printKey(senderSalt));
+		Log.i("keys", "rx key " + printKey(rxKey));
+		Log.i("keys", "rx salt " + printKey(receiverSalt));
 	}
-	
-	public void initiateIncomingSession(byte[] key, Codec codec, InputStream networkInputStream, OutputStream networkOutputStream) {
-		packetSizeInBytes = SRTP_OVERHEAD_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize());
+
+	private String printKey(byte[] txKey) {
+		String key = "";
+		for(byte b : txKey) {
+			key += Byte.toString(b) + ", ";
+		}
+		return key;
+	}
+
+	public void initiateIncomingSession(byte[] txKey, byte[] rxKey, Codec codec, InputStream networkInputStream, OutputStream networkOutputStream) {
+		packetSizeInBytes = SRTP_HEADER_SIZE_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize()) + SRTP_AUTHORIZATION_TAG_SIZE_IN_BYTES;
+		int rtpPacketSizeInBytes = SRTP_HEADER_SIZE_IN_BYTES + roundUpToMultipleOf4(codec.getBytesSize());
 		payloadSizeInBytes = codec.getBytesSize();
 		
 		byte[] senderSalt = getRandomSalt();
 		
-		int receiverSsrc = receiveSsrc(networkInputStream);
-		byte[] receiverSalt = receiveSalt(networkInputStream);
+		DataInputStream networkDataInputStream = new DataInputStream(networkInputStream);
+		int receiverSsrc = receiveSsrc(networkDataInputStream);
+		byte[] receiverSalt = receiveSalt(networkDataInputStream);
 		
-		initSender(key, senderSalt, codec.getCodecType(), codec.getSamplesSize());
+		int sth = initSender(txKey, senderSalt, codec.getCodecType(), codec.getSamplesSize(), payloadSizeInBytes, rtpPacketSizeInBytes, packetSizeInBytes);
 		int senderSsrc = getSsrc();
 		
 		sendSsrcAndSalt(networkOutputStream, senderSalt, senderSsrc);
 		
-		initReceiver(receiverSsrc, key, receiverSalt);
+		sth = initReceiver(receiverSsrc, rxKey, receiverSalt);
 		srtpInitialized = true;
+
+		Log.i("keys", "tx key " + printKey(txKey));
+		Log.i("keys", "tx salt " + printKey(senderSalt));
+		Log.i("keys", "rx key " + printKey(rxKey));
+		Log.i("keys", "rx salt " + printKey(receiverSalt));
 	}
 
-	private byte[] receiveSalt(InputStream networkInputStream) {
+	private byte[] receiveSalt(DataInputStream networkInputStream) {
 		try {
 			byte[] salt = new byte[SALT_SIZE];
-			networkInputStream.read(salt);
+			networkInputStream.readFully(salt);
 			return salt;
 		} catch(IOException e) {
 			//TODO some error handling
@@ -71,10 +96,9 @@ public class SrtpProtocol {
 		}
 	}
 
-	private int receiveSsrc(InputStream networkInputStream) {
-		DataInputStream dis = new DataInputStream(networkInputStream);
+	private int receiveSsrc(DataInputStream networkInputStream) {
 		try {
-			return dis.readInt();
+			return networkInputStream.readInt();
 		} catch(IOException e) {
 			//TODO some error handling
 			return 0;
@@ -108,7 +132,7 @@ public class SrtpProtocol {
 		if(wrapper != null) {
 			throw new ProtocolException("wrapper is already initialized");
 		}
-		wrapper = new SrtpWrapper(inputStream, outputStream, payloadSizeInBytes);
+		wrapper = new SrtpWrapper(inputStream, outputStream, payloadSizeInBytes, packetSizeInBytes, SRTP_HEADER_SIZE_IN_BYTES);
 	}
 	
 	public InputStream unwrapStream(InputStream inputStream) {
@@ -122,7 +146,7 @@ public class SrtpProtocol {
 		if(unwrapper != null) {
 			throw new ProtocolException("unwrapper is already initialized");
 		}
-		unwrapper = new SrtpUnwrapper(inputStream, outputStream, packetSizeInBytes);
+		unwrapper = new SrtpUnwrapper(inputStream, outputStream, packetSizeInBytes, payloadSizeInBytes, SRTP_HEADER_SIZE_IN_BYTES);
 	}
 	
 	private PipedInputStream prepareInputStream(PipedOutputStream outputStream) {
@@ -140,13 +164,15 @@ public class SrtpProtocol {
 		return size;
 	}
 	
-	private native int initSender(byte[] keyByteArray, byte[] saltByteArray, int codecType, int sampleCount);
+	private native int initSender(byte[] keyByteArray, byte[] saltByteArray, int codecType, int sampleCount, int payloadSizeInBytes, int rtpPacketSizeInBytes, int srtpPacketSizeInBytes);
 	
 	private native int getSsrc();
 	
 	private native int initReceiver(int ssrc, byte[] keyByteArray, byte[] saltByteArray);
 	
 	private native byte[] unwrapPacket(byte[] packet);
+	
+	private native int getHeaderSize();
 	
 	static {
 		System.loadLibrary("srtp");

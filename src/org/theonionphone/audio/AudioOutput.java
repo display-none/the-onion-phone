@@ -12,7 +12,7 @@ import android.media.AudioTrack;
 public class AudioOutput {
 
 	private final static int SAMPLE_RATE = 8000;
-	private final static int TEN_SECOND_BUFFER_SIZE_IN_BYTES = 10 * (SAMPLE_RATE * 2);
+	private final static int TEN_SECOND_BUFFER_SIZE_IN_BYTES = 2 * (SAMPLE_RATE * 2);
 	
 	private final Codec codec;
 	private final AudioTrack audioTrack;

@@ -11,12 +11,20 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
+/**
+ * Holder for service managed by ServiceLocator.
+ * 
+ * Handles service create and destroy. Stores reference to the service that can be used by ServiceLocator.
+ *
+ * @param <T> Class of service implementation
+ */
 public class ServiceHolder<T extends LocalService> {
 
 	private static final long SERVICE_CREATION_TIMEOUT_SECONDS = 10;
+	
 	private Semaphore serviceCreationSemaphore = new Semaphore(0);
-	private T service;
 	private final Context context;
+	private T service;
 	
 	private ServiceConnection connection = new ServiceConnection() {
 		
@@ -35,15 +43,10 @@ public class ServiceHolder<T extends LocalService> {
 	public ServiceHolder(final Context context, final Class<T> clazz) {
 		this.context = context;
 		
-//		(new Thread() {
-//			public void run() {
-				boolean created = context.bindService(new Intent(context, clazz), connection, Context.BIND_AUTO_CREATE);
-				if(!created) {
-					throw new ServiceLocatorException("Service for class " + clazz.getName() + " cannot be created");
-				}
-//			};
-//		}).start();
-		
+		boolean created = context.bindService(new Intent(context, clazz), connection, Context.BIND_AUTO_CREATE);
+		if(!created) {
+			throw new ServiceLocatorException("Service for class " + clazz.getName() + " cannot be created");
+		}
 	}
 	
 	T getService() {

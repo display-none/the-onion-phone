@@ -1,5 +1,7 @@
 package org.theonionphone;
 
+import java.security.Security;
+
 import android.app.Application;
 import android.content.Context;
 
@@ -20,5 +22,9 @@ public class TheOnionPhone extends Application {
 	
 	private void setContext(Context context) {
 		this.context = context;
+	}
+	
+	static {
+	    Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
 	}
 }

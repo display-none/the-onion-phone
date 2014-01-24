@@ -1,47 +1,65 @@
 package org.theonionphone.protocol;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.theonionphone.common.exceptions.MainProtocolException;
+
+import android.os.Process;
+
 public class SrtpWrapper extends Thread {
 	
-	private InputStream inputStream;
+	private DataInputStream inputStream;
 	private OutputStream outputStream;
-	private int payloadSize;
+	private final int payloadSize;
+	private final int packetSize;
+	private final int headerSize;
 	
 	private boolean running = true;
 
-	public SrtpWrapper(InputStream inputStream, OutputStream outputStream, int payloadSize) {
-		this.inputStream = inputStream;
+	public SrtpWrapper(InputStream inputStream, OutputStream outputStream, int payloadSize, int packetSize, int headerSize) {
+		this.inputStream = new DataInputStream(inputStream);
 		this.outputStream = outputStream;
 		this.payloadSize = payloadSize;
+		this.packetSize = packetSize;
+		this.headerSize = headerSize;
 	}
 	
 	@Override
 	public void run() {
+		Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
 		
-		byte[] payload = new byte[payloadSize];
-		byte[] packet;
+		byte[] packet = new byte[packetSize];
 		
-		while(running) {
-			readPayload(payload);
-			packet = wrapPayload(payload);
-			writePacket(packet);
+		try {
+			while(running) {
+				readPayloadIntoPacket(packet);
+				wrapPayload(packet);
+				writePacket(packet);
+			}
+		} finally {
+			closeStreams();
 		}
-		
-		closeStreams();
 	}
 	
 	public void stopAndClose() {
 		running = false;
 	}
 	
-	private void readPayload(byte[] payload) {
+	private void readPayloadIntoPacket(byte[] packet) {
 		try {
-			inputStream.read(payload);
+			inputStream.readFully(packet, headerSize, payloadSize);
 		} catch (IOException e) {
-			//TODO handle it
+			throw new MainProtocolException("cannot read payload", e);
+		}
+	}
+	
+	private void wrapPayload(byte[] packet) {
+		int errorCode = wrapPayloadNative(packet);
+		if(errorCode != SrtpErrorCode.OK) {
+			throw new MainProtocolException("native srtp wrapper exited with error code: " + errorCode);
 		}
 	}
 
@@ -49,7 +67,7 @@ public class SrtpWrapper extends Thread {
 		try {
 			outputStream.write(packet);
 		} catch (IOException e) {
-			// TODO handle it
+			throw new MainProtocolException("cannot write packet", e);
 		}
 	}
 	
@@ -60,6 +78,6 @@ public class SrtpWrapper extends Thread {
 		} catch (IOException e) { }
 	}
 	
-	private native byte[] wrapPayload(byte[] payload);
+	private native int wrapPayloadNative(byte[] packet);
 	
 }

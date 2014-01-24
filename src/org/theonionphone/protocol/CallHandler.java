@@ -15,6 +15,8 @@ import org.theonionphone.network.AnonimityNetwork;
 import org.theonionphone.ui.UserInterface;
 import org.theonionphone.utils.locator.ServiceLocator;
 
+import android.util.Log;
+
 public class CallHandler {
 
 	private final TheOnionPhoneProtocol theOnionPhoneProtocol;
@@ -73,6 +75,8 @@ public class CallHandler {
 		callStatus = CallStatus.INITIALIZED;
 		
 		userInterface.handleIncomingCall(callInfo);
+		Log.i("the-onion-phone", "waiting for accept");
+		userInterface.acceptCall();
 	}
 	
 	public void acceptCall(CallInfo callInfo) {
@@ -82,6 +86,21 @@ public class CallHandler {
 		OutputStream networkOutputStream = anonimityNetwork.getOutputStream();
 		
 		theOnionPhoneProtocol.acceptCall(callInfo, networkInputStream, networkOutputStream);
+		
+		srtpProtocol.initiateIncomingSession(callInfo.getTxKey(), callInfo.getRxKey(), audioManager.getCodec(), networkInputStream, networkOutputStream);
+		
+		InputStream applicationInputStream = getApplicationInputStream();
+		OutputStream applicationOutputStream = getApplicationOutputStream();
+		
+		applicationToNetworkConnector = new Connector(applicationInputStream, networkOutputStream);
+		networkToApplicationConnector = new Connector(networkInputStream, applicationOutputStream);
+		
+		audioManager.startSending();
+		
+		applicationToNetworkConnector.start();
+		networkToApplicationConnector.start();
+		
+		callStatus = CallStatus.ONGOING;
 	}
 	
 	public void endCall() {

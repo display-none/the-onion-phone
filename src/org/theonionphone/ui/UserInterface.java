@@ -7,4 +7,6 @@ public interface UserInterface {
 	void handleIncomingCall(CallInfo callInfo);
 	
 	void handleIncomingMessage();
+	
+	void acceptCall();
 }

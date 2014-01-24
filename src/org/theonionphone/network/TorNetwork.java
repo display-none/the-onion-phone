@@ -18,7 +18,7 @@ public class TorNetwork extends LocalService implements AnonimityNetwork {
 
 	public final static String TOR_BIN_PATH = "/data/data/org.torproject.android/app_bin/tor";
 	public static final int HIDDEN_SERVICE_PORT = 5004;	//it's a nice number and it's reserved for RTP media data
-	private static final int SOCKET_TIMEOUT = 10000;		//10 seconds
+	private static final int SOCKET_TIMEOUT = 100000;		//100 seconds
 	private boolean listenerStartNeeded = false;
 	
 	private Socket socket;
@@ -76,30 +76,20 @@ public class TorNetwork extends LocalService implements AnonimityNetwork {
 	@Override
 	public InputStream getInputStream() {
 		checkForNullSocket();
-		InputStream inputStream;
 		try {
-			inputStream = socket.getInputStream();
+			return socket.getInputStream();
 		} catch (IOException e) {
 			throw new ConnectionException("error while getting input stream");
 		}
-		return inputStream;
 	}
 
 	@Override
 	public OutputStream getOutputStream() {
 		checkForNullSocket();
-		OutputStream outputStream;
 		try {
-			outputStream = socket.getOutputStream();
+			return socket.getOutputStream();
 		} catch (IOException e) {
 			throw new ConnectionException("error while getting output stream");
-		}
-		return outputStream;
-	}
-	
-	private void checkForNullSocket() {
-		if(socket == null) {
-			throw new ConnectionException("not connected");
 		}
 	}
 	
@@ -111,6 +101,12 @@ public class TorNetwork extends LocalService implements AnonimityNetwork {
 		} catch (IOException e) { }
 		socket = null;
 		resumeListenerIfEnabled();
+	}
+	
+	private void checkForNullSocket() {
+		if(socket == null) {
+			throw new ConnectionException("not connected");
+		}
 	}
 
 	private void resumeListenerIfEnabled() {
